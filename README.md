@@ -1,4 +1,4 @@
 nodechat
 ========
 
-node stuff
+node stuff that rocks
