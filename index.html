@@ -26,35 +26,73 @@
       ul li {
         line-height: 1.4;
       }
+
+      #chatui {
+        display: none;
+      }
     </style>
 
     <script>
+    
+    var uniqid = function() {
+     var n=Math.floor(Math.random()*11);
+     var k = Math.floor(Math.random()* 1000000);
+     return String.fromCharCode(n)+k;
+    }
+    
+    var client_id = uniqid();
 
     $(document).ready(function() {
       var host = location.origin.replace(/^http/, 'ws')
       var ws = new WebSocket(host);
 
+      $('#submitperson').on('click', function(e) {
+        var person = $('#person').val();
+        if( person != '' ) {
+          var obj = {
+              id: client_id,
+              person: person,
+              chatstr: person + ' just joined this chat'
+          };
+
+          ws.send( JSON.stringify( obj ) );
+          $('#personui').slideUp(400,function() {
+            $('#chatui').slideDown();
+          });
+        }
+      });
         
       $('#submitmessage').on('click', function(e) {
         var message = $('#message').val();
         if( message != '' ) {
-          ws.send( message );
+          var obj = {
+            id: client_id,
+            person: $('#person').val(),
+            chatstr: message
+          };
+          ws.send( JSON.stringify(obj) );
+          $('#message').val('');
+          $('#message').focus();
         }
       });
-        
 
-      ws.onmessage = function (event) {
-        var li = document.createElement('li');
-        li.innerHTML = event.data;
-        document.querySelector('#pings').appendChild(li);
+      ws.onmessage = function (e) {
+        var obj = JSON.parse(e.data);
+        var li = '<li><strong>' + obj.person + ':</strong> ' + obj.chatstr + ' <small>(' + obj.chatdate + ')</small></li>';
+        $('#chats').prepend(li);
       };
 
     });
     </script>
   </head>
   <body>
-    <h1>Pings</h1>
-    <input type="text" id="message" placeholder="Enter Message" /> <button id="submitmessage">Submit</button>
-    <ul id='pings'></ul>
+    <h1>Chat Awesome</h1>
+    <div id="personui">
+      <input type="text" id="person" placeholder="Enter Name" /> <button id="submitperson">Submit</button>
+    </div>
+    <div id="chatui">
+      <input type="text" id="message" placeholder="Enter Message" /> <button id="submitmessage">Submit</button>
+      <ul id='chats'></ul>
+    </div>
   </body>
 </html>

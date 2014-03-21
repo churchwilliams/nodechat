@@ -13,19 +13,26 @@ console.log('http server listening on %d', port);
 
 var wss = new WebSocketServer({server: server});
 console.log('websocket server created');
-wss.on('connection', function(ws) {
-    /*
-    var id = setInterval(function() {
-        ws.send(JSON.stringify(new Date()), function() {  });
-    }, 1000);
-    */
 
+var clients = {};
+wss.on('connection', function(ws) {
     console.log('websocket connection open');
-    
-    ws.on('message', function(str) {
-      console.log("Message received: " + str );
-      // Echo message back you punk
-      ws.send( str );
+
+    ws.on('message', function(json) {
+      var obj = JSON.parse(json);
+      obj.chatdate = JSON.stringify( new Date() );
+
+      if(!clients.hasOwnProperty(obj.id)) {
+        console.log('adding client: ' + obj.person);
+        clients[obj.id] = ws;
+      }
+
+      console.log("Broadcasting message: " + obj.chatstr );
+     
+      var msg = JSON.stringify( obj );
+      for( var ws_id in clients ) {
+        clients[ws_id].send( msg );
+      }
     });
 
     ws.on('close', function() {
